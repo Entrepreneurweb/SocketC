@@ -8,14 +8,14 @@
 #define BUFFER_SIZE 1024
 
 int main() {
-    // Initialisation de Winsock
+    //  initialisation de winsock
     WSADATA wsadata;
     if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0) {
         printf("Erreur d'initialisation: %d\n", WSAGetLastError());
         exit(1);
     }
 
-    // Création du socket
+    //  je cree le socket
     SOCKET SocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (SocketFd == INVALID_SOCKET) {
         printf("Erreur de création du socket: %d\n", WSAGetLastError());
@@ -23,7 +23,7 @@ int main() {
         exit(1);
     }
 
-    // Configuration de l'adresse socket
+    // configuration
     struct sockaddr_in SocketAddress;
     SocketAddress.sin_family = AF_INET;
     SocketAddress.sin_port = htons(5600);
@@ -38,7 +38,7 @@ int main() {
 
     printf("Connexion au serveur...\n");
 
-    // Connexion au serveur
+    //  connection
     if (connect(SocketFd, (struct sockaddr*)&SocketAddress, sizeof(SocketAddress)) == SOCKET_ERROR) {
         printf("Erreur de connexion: %d\n", WSAGetLastError());
         closesocket(SocketFd);
@@ -50,7 +50,7 @@ int main() {
 
     char MessageBuffer[BUFFER_SIZE] = {0};
 
-    // Boucle d'envoi continue
+    //  boucle de message
     while (1) {
         printf("Entrez le message à envoyer : ");
         fgets(MessageBuffer, sizeof(MessageBuffer), stdin);
@@ -64,7 +64,7 @@ int main() {
             if( ! strncmp(MessageBuffer, "exit", 4)  ){
                 break;
             }
-        // Réinitialiser le buffer pour le prochain message
+        //  buffer renew
         memset(MessageBuffer, 0, BUFFER_SIZE);
     }
 

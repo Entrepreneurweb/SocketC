@@ -6,9 +6,9 @@
 #include <windows.h>
 
 #define BUFFER_SIZE 1024
-#define MAX_CLIENTS 50 // Définissez le nombre maximal de clients
+#define MAX_CLIENTS 50 // taill max de client
 
-// Fonction d'initialisation de Winsock
+// init winsocl
 void InitializeWinsock() {
     WSADATA wsadata;
     if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0) {
@@ -17,12 +17,12 @@ void InitializeWinsock() {
     }
 }
 
-// Fonction de nettoyage de Winsock
+//  netoyer winsock
 void CleanupWinsock() {
     WSACleanup();
 }
 
-// Fonction de gestion des communications avec un client
+//  client handler
 DWORD WINAPI ClientHandler(LPVOID clientSocket) {
     SOCKET clientSock = *((SOCKET*)clientSocket);
     char buffer[BUFFER_SIZE] = {0};
@@ -39,7 +39,7 @@ DWORD WINAPI ClientHandler(LPVOID clientSocket) {
                 break;
             }
 
-            // Réinitialiser le buffer
+            // Réinitialiser mon buffer
             memset(buffer, 0, BUFFER_SIZE);
         } else if (recvResult == 0) {
             printf("Client déconnecté proprement.\n");
@@ -50,16 +50,16 @@ DWORD WINAPI ClientHandler(LPVOID clientSocket) {
         }
     }
 
-    // Fermeture du socket client
+    // je ferme le socket
     closesocket(clientSock);
     return 0;
 }
 
-// Fonction principale du serveur
+ 
 int main() {
     InitializeWinsock();
 
-    // Création du socket serveur
+    //  
     SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == INVALID_SOCKET) {
         printf("Erreur de création du socket: %d\n", WSAGetLastError());
@@ -67,13 +67,13 @@ int main() {
         exit(1);
     }
 
-    // Configuration de l'adresse du socket serveur
+    // socket set
     struct sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(5600);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
-    // Binding du socket serveur
+    // Binding 
     if (bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == SOCKET_ERROR) {
         printf("Erreur de liaison du socket: %d\n", WSAGetLastError());
         closesocket(serverSocket);
@@ -81,7 +81,7 @@ int main() {
         exit(1);
     }
 
-    // Écoute sur le socket serveur
+    // ecoute
     if (listen(serverSocket, MAX_CLIENTS) == SOCKET_ERROR) {
         printf("Erreur d'écoute sur le socket: %d\n", WSAGetLastError());
         closesocket(serverSocket);
@@ -91,6 +91,8 @@ int main() {
 
     printf("Serveur en écoute, en attente de connexions...\n");
 
+
+// ma boucle d'acceptation infinie
     while (1) {
         struct sockaddr_in clientAddress;
         int clientAddressLen = sizeof(clientAddress);
