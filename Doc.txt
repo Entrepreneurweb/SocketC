@@ -1,0 +1,44 @@
+ID:1 QUESTION:What is the largest ocean in the world? # OPTION1:Atlantic Ocean # OPTION2:Indian Ocean # OPTION3:Pacific Ocean # OPTION4:Arctic Ocean # CORRECTOPTION:Pacific Ocean #  
+ID:2 QUESTION:Which planet is closest to the sun? # OPTION1:Mars # OPTION2:Venus # OPTION3:Mercury # OPTION4:Jupiter # CORRECTOPTION:Mercury #  
+ID:3 QUESTION:What chemical element is represented by the symbol 'O'? # OPTION1:Oxygen # OPTION2:Gold # OPTION3:Osmium # OPTION4:Hydrogen # CORRECTOPTION:Oxygen #  
+ID:4 QUESTION:What is the capital of France? # OPTION1:Berlin # OPTION2:Rome # OPTION3:Paris # OPTION4:Madrid # CORRECTOPTION:Paris #  
+ID:5 QUESTION:Who painted the Mona Lisa? # OPTION1:Picasso # OPTION2:Van Gogh # OPTION3:Leonardo da Vinci # OPTION4:Monet # CORRECTOPTION:Leonardo da Vinci #  
+ID:6 QUESTION:How many continents are there on Earth? # OPTION1:5 # OPTION2:6 # OPTION3:7 # OPTION4:8 # CORRECTOPTION:7 #  
+ID:7 QUESTION:Which animal is known for its ability to change color? # OPTION1:Chameleon # OPTION2:Butterfly # OPTION3:Octopus # OPTION4:Clownfish # CORRECTOPTION:Chameleon #  
+ID:8 QUESTION:In which country is the Great Wall located? # OPTION1:India # OPTION2:Japan # OPTION3:China # OPTION4:South Korea # CORRECTOPTION:China #  
+ID:9 QUESTION:What is the smallest country in the world? # OPTION1:Monaco # OPTION2:Vatican # OPTION3:Liechtenstein # OPTION4:San Marino # CORRECTOPTION:Vatican #  
+ID:10 QUESTION:What is the official language of Brazil? # OPTION1:Spanish # OPTION2:French # OPTION3:English # OPTION4:Portuguese # CORRECTOPTION:Portuguese #  
+ID:11 QUESTION:What is the unit of measurement for force? # OPTION1:Newton # OPTION2:Pascal # OPTION3:Joule # OPTION4:Watt # CORRECTOPTION:Newton #  
+ID:12 QUESTION:What is the most popular sport in the world? # OPTION1:Basketball # OPTION2:Football # OPTION3:Cricket # OPTION4:Golf # CORRECTOPTION:Football #  
+ID:13 QUESTION:How many bones are in the adult human body? # OPTION1:206 # OPTION2:210 # OPTION3:201 # OPTION4:250 # CORRECTOPTION:206 #  
+ID:14 QUESTION:What is the chemical element with the symbol 'Au'? # OPTION1:Silver # OPTION2:Gold # OPTION3:Platinum # OPTION4:Aluminum # CORRECTOPTION:Gold #  
+ID:15 QUESTION:What is the capital of Canada? # OPTION1:Toronto # OPTION2:Ottawa # OPTION3:Vancouver # OPTION4:Montreal # CORRECTOPTION:Ottawa #  
+ID:16 QUESTION:Who wrote *Romeo and Juliet*? # OPTION1:Molière # OPTION2:Victor Hugo # OPTION3:William Shakespeare # OPTION4:Charles Dickens # CORRECTOPTION:William Shakespeare #  
+ID:17 QUESTION:What is the largest desert in the world? # OPTION1:Sahara # OPTION2:Arctic # OPTION3:Gobi # OPTION4:Antarctica # CORRECTOPTION:Antarctica #  
+ID:18 QUESTION:What is the fastest animal in the world? # OPTION1:Cheetah # OPTION2:Peregrine Falcon # OPTION3:Black Marlin # OPTION4:Antelope # CORRECTOPTION:Peregrine Falcon #  
+ID:19 QUESTION:What is the chemical formula for water? # OPTION1:H2O # OPTION2:CO2 # OPTION3:O2 # OPTION4:NH3 # CORRECTOPTION:H2O #  
+ID:20 QUESTION:What is the highest mountain peak in the world? # OPTION1:Kilimanjaro # OPTION2:Mont Blanc # OPTION3:Mount Everest # OPTION4:Mount McKinley # CORRECTOPTION:Mount Everest #  
+ID:21 QUESTION:Which country invented the Olympic Games? # OPTION1:France # OPTION2:Greece # OPTION3:Italy # OPTION4:Spain # CORRECTOPTION:Greece #  
+ID:22 QUESTION:Which country has the largest population? # OPTION1:India # OPTION2:China # OPTION3:United States # OPTION4:Indonesia # CORRECTOPTION:China #  
+ID:23 QUESTION:What is the chemical symbol for iron? # OPTION1:F # OPTION2:Fe # OPTION3:Ir # OPTION4:Fr # CORRECTOPTION:Fe #  
+ID:24 QUESTION:What is the speed of light? # OPTION1:300,000 km/h # OPTION2:300,000 m/s # OPTION3:300,000 km/s # OPTION4:300,000 m/h # CORRECTOPTION:300,000 km/s #  
+ID:25 QUESTION:What is the capital of Italy? # OPTION1:Venice # OPTION2:Florence # OPTION3:Rome # OPTION4:Milan # CORRECTOPTION:Rome #  
+ID:26 QUESTION:Which planet is known as the "Red Planet"? # OPTION1:Mercury # OPTION2:Mars # OPTION3:Jupiter # OPTION4:Saturn # CORRECTOPTION:Mars #  
+ID:27 QUESTION:How many days are in a leap year? # OPTION1:365 # OPTION2:366 # OPTION3:364 # OPTION4:367 # CORRECTOPTION:366 #  
+ID:28 QUESTION:What is the largest country in the world by area? # OPTION1:Canada # OPTION2:China # OPTION3:Russia # OPTION4:United States # CORRECTOPTION:Russia #  
+ID:29 QUESTION:Who developed the theory of relativity? # OPTION1:Newton # OPTION2:Galileo # OPTION3:Einstein # OPTION4:Tesla # CORRECTOPTION:Einstein #  
+ID:30 QUESTION:What is the largest marine mammal? # OPTION1:Dolphin # OPTION2:Blue Whale # OPTION3:Orca # OPTION4:Seal # CORRECTOPTION:Blue Whale #  
+ID:31 QUESTION:What is the currency of the European Union? # OPTION1:Franc # OPTION2:Euro # OPTION3:Dollar # OPTION4:Pound # CORRECTOPTION:Euro #  
+ID:32 QUESTION:What is the capital of Japan? # OPTION1:Kyoto # OPTION2:Tokyo # OPTION3:Osaka # OPTION4:Nagoya # CORRECTOPTION:Tokyo #  
+ID:33 QUESTION:What is the longest river in the world? # OPTION1:Nile # OPTION2:Amazon # OPTION3:Mekong # OPTION4:Yangtze # CORRECTOPTION:Amazon #  
+ID:34 QUESTION:What gas do plants use for photosynthesis? # OPTION1:Oxygen # OPTION2:Hydrogen # OPTION3:Carbon # OPTION4:Carbon dioxide # CORRECTOPTION:Carbon dioxide #  
+ID:35 QUESTION:Who painted *Starry Night*? # OPTION1:Monet # OPTION2:Van Gogh # OPTION3:Picasso # OPTION4:Da Vinci # CORRECTOPTION:Van Gogh #  
+ID:36 QUESTION:What is Australia’s national animal? # OPTION1:Koala # OPTION2:Kangaroo # OPTION3:Emu # OPTION4:Wallaby # CORRECTOPTION:Kangaroo #  
+ID:37 QUESTION:What is the distance between Earth and the Moon? # OPTION1:384,400 km # OPTION2:500,000 km # OPTION3:150,000 km # OPTION4:1,000,000 km # CORRECTOPTION:384,400 km #  
+ID:38 QUESTION:Who is the founder of Microsoft? # OPTION1:Steve Jobs # OPTION2:Elon Musk # OPTION3:Bill Gates # OPTION4:Mark Zuckerberg # CORRECTOPTION:Bill Gates #  
+ID:39 QUESTION:What is the largest lake in the world? # OPTION1:Lake Baikal # OPTION2:Lake Superior # OPTION3:Caspian Sea # OPTION4:Lake Victoria # CORRECTOPTION:Caspian Sea #  
+ID:40 QUESTION:What is the currency of the United Kingdom? # OPTION1:Euro # OPTION2:Dollar # OPTION3:Pound Sterling # OPTION4:Yen # CORRECTOPTION:Pound Sterling #  
+ID:41 QUESTION:What is the largest active volcano in the world? # OPTION1:Mauna Loa # OPTION2:Etna # OPTION3:Vesuvius # OPTION4:Krakatoa # CORRECTOPTION:Mauna Loa #  
+ID:42 QUESTION:Who wrote *Les Misérables*? # OPTION1:Victor Hugo # OPTION2:Emile Zola # OPTION3:Alexandre Dumas # OPTION4:Albert Camus # CORRECTOPTION:Victor Hugo #  
+ID:43 QUESTION:What is the capital of Spain? # OPTION1:Barcelona # OPTION2:Valencia # OPTION3:Madrid # OPTION4:Seville # CORRECTOPTION:Madrid #  
+ID:44 QUESTION:What is the chemical symbol for nitrogen? # OPTION1:Na # OPTION2:N # OPTION3:Ni # OPTION4:Ne # CORRECTOPTION:N #  

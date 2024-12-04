@@ -1,0 +1,6 @@
+Nom:exo Pwd:est
+Nom:exo1 Pwd:est1
+Nom:exau Pwd:est1
+Nom:dienaba Pwd:23
+Nom:exauce Pwd:est
+Nom:exoice Pwd:23
