@@ -8,9 +8,20 @@
 #define CHAR_SIZE 50
 #define MESSAGE_SIZE 22
 #define PART_SIZE 10
-#define Login_F 3
+ 
 #define QUESTION_SIZE 510
 #define OPTION_SIZE 100
+
+// message protocol enums
+#define MESSAGE_ERROR   "1"
+#define MESSAGE_SUCCES  "2"
+#define LOGIN           "3"
+#define NEW_ACCOUNT     "4"
+#define ANSWER_QUESTION "5"
+ 
+
+
+
 
 // Structure de l'utilisateur
 typedef struct {
@@ -20,6 +31,7 @@ typedef struct {
 } User;
 
 // Protocole de gestion des messages
+// join a game 11
 typedef enum {
     messageError = 1,
     messageSuccess = 2,
@@ -102,7 +114,8 @@ char* CreateUser(SOCKET socket, char* MessageBuffer) {
     memset(MessageBuffer, '*', MESSAGE_SIZE);
     strncpy(MessageBuffer, myuser.nom, strlen(myuser.nom));
     strncpy(MessageBuffer + PART_SIZE - 1, myuser.password, strlen(myuser.password));
-    strncpy(MessageBuffer + MESSAGE_SIZE - 1, "4", 1);
+    // adding flag
+    strncpy(MessageBuffer + MESSAGE_SIZE - 1, NEW_ACCOUNT, 1);
 
     if (send(socket, MessageBuffer, MESSAGE_SIZE, 0) == SOCKET_ERROR) {
         printf("\033[1;31mErreur d'envoi:\033[0m %d\n", WSAGetLastError());
@@ -153,7 +166,7 @@ void Login(int *Islog, SOCKET socket, char* MessageBuffer) {
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         strncpy(MessageBuffer, myuser.nom, strlen(myuser.nom));
         strncpy(MessageBuffer + PART_SIZE - 1, myuser.password, strlen(myuser.password));
-        strncpy(MessageBuffer + MESSAGE_SIZE - 1, "3", 1);
+        strncpy(MessageBuffer + MESSAGE_SIZE - 1, LOGIN , 1);
 
         CheckUserIdentity(myuser, socket, MessageBuffer);
 
@@ -198,7 +211,7 @@ char* ChosenAnswer(char* KeyboardChar, char* opt1, char* opt2, char* opt3, char*
 }
 
 
- void TestGame(SOCKET socket, char* MessageBuffer) {
+ void Play_Game(SOCKET socket, char* MessageBuffer) {
     // variable pour les boucles
     int i;
     // initialisation du buffer qui va stocker le message des questions
@@ -295,6 +308,54 @@ char* ChosenAnswer(char* KeyboardChar, char* opt1, char* opt2, char* opt3, char*
     }
 }
 
+void Join_Game(SOCKET socket , char* MessageBuffer){
+
+}
+void Create_Game(SOCKET socket , char* MessageBuffer){
+
+}
+
+
+void User_Menu(SOCKET socket ,char* MessageBuffer ){
+        int Menu_Option=0;
+printf(" user menu");
+
+    while(1){
+        Menu_Option = 0;
+    while ( Menu_Option<1 || Menu_Option>5 )
+    {
+    printf(" \033[1;33m 1. PROFILE \033[0m \n");    
+    printf(" \033[1;33m 2. JOIN A GAME \033[0m\n");
+    printf(" \033[1;33m 3. CREATE A GAME \033[0m\n");
+    printf(" \033[1;33m 4.  ABOUT  \033[0m\n");
+    printf(" \033[1;33m 5.  EXIT  \033[0m\n");
+    scanf("%d", &Menu_Option);
+    }
+    
+    switch (Menu_Option)
+    {
+    case  1:
+       printf(" profile \n");
+        break;
+    case 2:
+        printf(" JOIN A GAME \n");
+        break;
+    case 3:
+       printf(" CREATE A GAME \n");
+        break;
+ case 4:
+    printf(" ABOUT \n"); 
+    break;
+    case 5:
+       printf(" EXIT \n");
+       return ;
+        break;
+    default:
+        break;
+    }
+    }
+}
+
 
 int main() {
     WSADATA wsadata;
@@ -316,7 +377,7 @@ int main() {
     SocketAddress.sin_family = AF_INET;
     SocketAddress.sin_port = htons(5600);
 
-    int inetReturnCode = inet_pton(AF_INET, "192.168.1.133", &SocketAddress.sin_addr);
+    int inetReturnCode = inet_pton(AF_INET, "127.0.0.1", &SocketAddress.sin_addr);
     if (inetReturnCode <= 0) {
         printf("\033[1;31mErreur d'adresse IP.\033[0m\n");
         closesocket(SocketFd);
@@ -342,12 +403,14 @@ int main() {
     if (Islog) {
 
         PrintDecoratedTitle("BONNE CONTINUATION \n");
-         PrintDecoratedTitle(" YOUR GAME HAS STARTED \n");
-        TestGame(SocketFd, MessageBuffer);
+         
+         User_Menu(SocketFd,MessageBuffer );
+
+        Play_Game(SocketFd, MessageBuffer);
     }
 
     // printf(" je vais tester le jeu \n");
-    // TestGame(SocketFd, MessageBuffer);
+    // Play_Game(SocketFd, MessageBuffer);
 
     closesocket(SocketFd);
     WSACleanup();
