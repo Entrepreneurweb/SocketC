@@ -355,7 +355,7 @@ void User_Menu(SOCKET socket ,char* MessageBuffer ){
  
 
     while(1){
-        Menu_Option = 0;
+        Menu_Option = 0; 
     while ( Menu_Option<1 || Menu_Option>5 )
     {
      printf(" \033[1;33m 1.  START A NEW GAME  \033[0m\n");
