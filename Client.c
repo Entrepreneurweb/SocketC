@@ -18,8 +18,11 @@
 #define LOGIN           "3"
 #define NEW_ACCOUNT     "4"
 #define ANSWER_QUESTION "5"
+#define GET_SESSION_LIST "13"
+#define CREATE_SESSION  "11"
+#define JOIN_SESSION    "12"
  
-
+// translation
 
 
 
@@ -70,22 +73,22 @@ int getFlag(char *buffer) {
 }
 
 char* CheckUserIdentity(User user, SOCKET socket, char* MessageBuffer) {
-    PrintDecoratedTitle("VERIFICATION D'IDENTITE");
-    printf("\033[1;32mVoici le message avant l'envoi:\033[0m %s\n", MessageBuffer);
+    PrintDecoratedTitle("IDENTITY VERIFICATION");
+   // printf("\033[1;32mHere is the message before sending:\033[0m %s\n", MessageBuffer);
     int SentMessageFd = send(socket, MessageBuffer, MESSAGE_SIZE, 0);
     if (SentMessageFd == SOCKET_ERROR) {
-        printf("\033[1;31mErreur d'envoi du message:\033[0m %d\n", WSAGetLastError());
+        printf("\033[1;31mMessage send error:\033[0m %d\n", WSAGetLastError());
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
         return MessageBuffer;
     }
 
-    printf("\033[1;33mEN ATTENTE DE CONFIRMATION D'IDENTITE\033[0m\n");
+    printf("\033[1;33mWAITING FOR IDENTITY CONFIRMATION\033[0m\n");
 
     int ReceivedMessage = recv(socket, MessageBuffer, MESSAGE_SIZE, 0);
-    printf("\033[1;32mMessage reçu\033[0m\n");
+    printf("\033[1;32mMessage received\033[0m\n");
     if (ReceivedMessage == SOCKET_ERROR) {
-        printf("\033[1;31mErreur de réception du message:\033[0m %d\n", WSAGetLastError());
+        printf("\033[1;31mMessage reception error:\033[0m %d\n", WSAGetLastError());
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
         return MessageBuffer;
@@ -94,42 +97,43 @@ char* CheckUserIdentity(User user, SOCKET socket, char* MessageBuffer) {
     int ResponseFlag = getFlag(MessageBuffer);
     if (ResponseFlag != 3) {
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
-        printf("\033[1;31mUN TEL UTILISATEUR N'EXISTE PAS, VEUILLEZ CREER UN COMPTE\033[0m\n");
+        printf("\033[1;31mNO SUCH USER EXISTS, PLEASE CREATE AN ACCOUNT\033[0m\n");
         return MessageBuffer;
     }
     MessageBuffer[MESSAGE_SIZE - 1] = messageSuccess;
     return MessageBuffer;
 }
 
+
 char* CreateUser(SOCKET socket, char* MessageBuffer) {
     User myuser;
-    PrintDecoratedTitle("CREATION D'UN NOUVEAU COMPTE");
+    PrintDecoratedTitle("CREATE A NEW ACCOUNT");
 
-    printf("\033[1;36mCREER UN NOM D'UTILISATEUR:\033[0m ");
+    printf("\033[1;36mCREATE A USERNAME:\033[0m ");
     scanf("%9s", myuser.nom);
 
-    printf("\033[1;36mCREER UN MOT DE PASSE:\033[0m ");
+    printf("\033[1;36mCREATE A PASSWORD:\033[0m ");
     scanf("%9s", myuser.password);
 
     memset(MessageBuffer, '*', MESSAGE_SIZE);
     strncpy(MessageBuffer, myuser.nom, strlen(myuser.nom));
-    strncpy(MessageBuffer + PART_SIZE - 1, myuser.password, strlen(myuser.password));
+    strncpy(MessageBuffer + PART_SIZE, myuser.password, strlen(myuser.password));
     // adding flag
     strncpy(MessageBuffer + MESSAGE_SIZE - 1, NEW_ACCOUNT, 1);
-
+    // printf(" message from sign up: %s \n", MessageBuffer);  // Unnecessary log
     if (send(socket, MessageBuffer, MESSAGE_SIZE, 0) == SOCKET_ERROR) {
-        printf("\033[1;31mErreur d'envoi:\033[0m %d\n", WSAGetLastError());
+        printf("\033[1;31mSend error:\033[0m %d\n", WSAGetLastError());
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
         return MessageBuffer;
     }
 
-    printf("\033[1;33mEN ATTENTE DE LA CREATION DU COMPTE\033[0m\n");
+    printf("\033[1;33mWAITING FOR ACCOUNT CREATION\033[0m\n");
 
     memset(MessageBuffer, '*', MESSAGE_SIZE);
     int ReceivedMessage = recv(socket, MessageBuffer, MESSAGE_SIZE, 0);
     if (ReceivedMessage <= 0) {
-        printf("\033[1;31mErreur de réception ou connexion fermée:\033[0m %d\n", WSAGetLastError());
+        printf("\033[1;31mReception error or connection closed:\033[0m %d\n", WSAGetLastError());
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
         return MessageBuffer;
@@ -137,7 +141,7 @@ char* CreateUser(SOCKET socket, char* MessageBuffer) {
 
     int ResponseFlag = getFlag(MessageBuffer);
     if (ResponseFlag != 4) {
-        printf("\033[1;31mErreur lors de la création du compte.\033[0m\n");
+        printf("\033[1;31mError during account creation.\033[0m\n");
         memset(MessageBuffer, '*', MESSAGE_SIZE);
         MessageBuffer[MESSAGE_SIZE - 1] = messageError;
         return MessageBuffer;
@@ -145,9 +149,10 @@ char* CreateUser(SOCKET socket, char* MessageBuffer) {
 
     memset(MessageBuffer, '*', MESSAGE_SIZE);
     MessageBuffer[MESSAGE_SIZE - 1] = messageSuccess;
-    printf("\033[1;32mCOMPTE CREE AVEC SUCCES!\033[0m\n");
+    printf("\033[1;32mACCOUNT SUCCESSFULLY CREATED!\033[0m\n");
     return MessageBuffer;
 }
+
 
 void Login(int *Islog, SOCKET socket, char* MessageBuffer) {
     User myuser;
@@ -157,10 +162,10 @@ void Login(int *Islog, SOCKET socket, char* MessageBuffer) {
     PrintDecoratedTitle("LOGIN");
 
     while (1) {
-        printf("\033[1;36mENTREZ VOS IDENTIFIANTS POUR VOUS CONNECTER\033[0m\n");
-        printf("\033[1;36mENTREZ VOTRE NOM D'UTILISATEUR:\033[0m ");
+        printf("\033[1;36mENTER YOUR CREDENTIALS TO LOG IN\033[0m\n");
+        printf("\033[1;36mENTER YOUR USERNAME:\033[0m ");
         scanf("%9s", myuser.nom);
-        printf("\033[1;36mENTREZ VOTRE MOT DE PASSE:\033[0m ");
+        printf("\033[1;36mENTER YOUR PASSWORD:\033[0m ");
         scanf("%9s", myuser.password);
 
         memset(MessageBuffer, '*', MESSAGE_SIZE);
@@ -172,12 +177,12 @@ void Login(int *Islog, SOCKET socket, char* MessageBuffer) {
 
         if (MessageBuffer[MESSAGE_SIZE - 1] == messageSuccess) {
             *Islog = 1;
-            PrintDecoratedTitle("CONNEXION REUSSIE");
+            PrintDecoratedTitle("SUCCESSFUL LOGIN");
             break;
         }
 
-        printf("\033[1;31mLE LOGIN A ECHOUE, ERREUR\033[0m: %s\n", myuser.nom);
-        printf("\033[1;33m1 = CREER UN NOUVEAU COMPTE, 2 = QUITTER, AUTRE = RESSAYER\033[0m\n");
+        printf("\033[1;31mLOGIN FAILED, ERROR\033[0m: %s\n", myuser.nom);
+        printf("\033[1;33m1 = CREATE A NEW ACCOUNT, 2 = EXIT, OTHER = TRY AGAIN\033[0m\n");
         scanf("%d", &userAction);
         if (userAction == 1) {
             CreateUser(socket, MessageBuffer);
@@ -186,10 +191,11 @@ void Login(int *Islog, SOCKET socket, char* MessageBuffer) {
         }
     }
 }
+
 // Ma fonction pour  retourner le vrai choi
 char* ChosenAnswer(char* KeyboardChar, char* opt1, char* opt2, char* opt3, char* opt4)
 {
-    char SwCkeck= KeyboardChar[0];
+    char SwCkeck = KeyboardChar[0];
     switch (SwCkeck)
     {
     case 'A':
@@ -205,129 +211,154 @@ char* ChosenAnswer(char* KeyboardChar, char* opt1, char* opt2, char* opt3, char*
     case 'd':
         return opt4;
     default:
-        printf(" VOTRE ENTREE N'EST PAS VALIDE. L'OPTION 1 SERA RENVOYEE PAR DEFAUT.\n");
+        printf("YOUR INPUT IS INVALID. OPTION 1 WILL BE RETURNED BY DEFAULT.\n");
         return opt1;
     }
 }
 
 
- void Play_Game(SOCKET socket, char* MessageBuffer) {
-    // variable pour les boucles
+ 
+void Play_Game(SOCKET socket, char* MessageBuffer, int Check_Question_Load) {
+    // variables for loops
     int i;
-    // initialisation du buffer qui va stocker le message des questions
+    int EatBuffer = 0;
+    int Question_Number;
+    // initialize the buffer to store question messages
     char QuesMessageBuffer[QUESTION_SIZE] = {0};
 
-    // initialisation du message buffer
+    // initialize the message buffer
     memset(MessageBuffer, '*', MESSAGE_SIZE);
-    char QuizQuestion[5];
-// "\033[1;33m1 = CREER UN NOUVEAU COMPTE, 2 = QUITTER, AUTRE = RESSAYER\033[0m\n"
-    printf("\033[1;33m1 COMBIEN DE QUESTIONS VOULEZ-VOUS GÉNÉRER DANS LE QUIZ \033[0m\n");
-    scanf("%s", QuizQuestion);
+    if (Check_Question_Load == 0) {
+        char QuizQuestion[5];
+        printf("\033[1;33mHOW MANY QUESTIONS WOULD YOU LIKE TO GENERATE IN THE QUIZ?\033[0m\n");
+        scanf("%s", QuizQuestion);
+        Question_Number = atoi(QuizQuestion);
+        // Modify the message buffer to send the desired number of questions
+        for (i = 0; i < strlen(QuizQuestion); i++) {
+            MessageBuffer[i] = QuizQuestion[i];
+        }
 
-    // Modifie le message buffer pour qu'il envoie le nombre de questions souhaitées
-    for(i = 0; i < strlen(QuizQuestion); i++) {
-        MessageBuffer[i] = QuizQuestion[i];
+        MessageBuffer[MESSAGE_SIZE - 1] = '8';  // Indicate this is a game creation request
+        int SentMessageFd = send(socket, MessageBuffer, MESSAGE_SIZE, 0);
+        if (SentMessageFd == SOCKET_ERROR) {
+            printf("\033[1;31mError sending message:\033[0m %d\n", WSAGetLastError());
+            return;
+        }
+        int ReceiveMessageFd;
+
+        // Wait for the server's response regarding game creation
+        memset(MessageBuffer, '*', MESSAGE_SIZE);
+        ReceiveMessageFd = recv(socket, MessageBuffer, MESSAGE_SIZE, 0);
+        if (ReceiveMessageFd == SOCKET_ERROR) {
+            printf("\033[1;31mError receiving game creation confirmation message:\033[0m %d\n", WSAGetLastError());
+            return;
+        }
+
+        // Check if the game was correctly created
+      //  printf("MESSAGE BUFFER: %s\n", MessageBuffer);
     }
 
-    MessageBuffer[MESSAGE_SIZE - 1] = '8';  // Indiquer que c'est une demande de création de jeu
-    int SentMessageFd = send(socket, MessageBuffer, MESSAGE_SIZE, 0);
-    if (SentMessageFd == SOCKET_ERROR) {
-        printf("\033[1;31mErreur d'envoi du message:\033[0m %d\n", WSAGetLastError());
-        return;
-    }
-
-    // Attendre la réponse du serveur concernant la création du jeu
-    int ReceiveMessageFd = recv(socket, MessageBuffer, MESSAGE_SIZE, 0);
-    if (ReceiveMessageFd == SOCKET_ERROR) {
-        printf("\033[1;31mErreur lors de la réception du message de confirmation de création de jeu :\033[0m %d\n", WSAGetLastError());
-        return;
-    }
-
-    // Vérifier si le jeu a été correctement créé
-    if (MessageBuffer[0] != '1') {
-        printf("ERREUR LORS DE LA PRÉPARATION DU JEU\n");
-        return;
-    }
-
-    // Attente des questions et envoi des réponses
+    // Waiting for questions and sending answers
     int RecvQuestionFd, SentQuestion;
-    int QuestionNumber = atoi(QuizQuestion);
     char MyChoice[4];
-   
+   // printf("I will receive questions now.\n");
 
-    for(i = 0; i < QuestionNumber; i++) {
-         char bufOpt1[OPTION_SIZE]={0};
-         char bufOpt2[OPTION_SIZE]={0};
-         char bufOpt3[OPTION_SIZE]={0};
-         char bufOpt4[OPTION_SIZE]={0};
-        // Réception de la question
+    for (int i = 0; i < Question_Number; i++) {
+        char bufOpt1[OPTION_SIZE] = {0};
+        char bufOpt2[OPTION_SIZE] = {0};
+        char bufOpt3[OPTION_SIZE] = {0};
+        char bufOpt4[OPTION_SIZE] = {0};
+        // Receive the question
         RecvQuestionFd = recv(socket, QuesMessageBuffer, QUESTION_SIZE, 0);
         if (RecvQuestionFd == SOCKET_ERROR) {
-            printf("\033[1;31mErreur lors de la réception de la question numéro :%d, ERREUR :\033[0m %d\n", i, WSAGetLastError());
+            printf("\033[1;31mError receiving question number :%d, ERROR :\033[0m %d\n", i, WSAGetLastError());
             return;
         } else {
-            // Afficher les options pour l'utilisateur
-            // \033[0m
-            printf("\033[1;33m Question %d: %s \033[0m \n", i + 1, QuesMessageBuffer);
-            printf("\033[1;34m Choisissez votre réponse (A-D) : 033[0m\n");  
-            // on affiche et copie dans le buffer l'option1
+            // Display the options for the user
+            printf("\033[1;33mQuestion %d: %s\033[0m\n", i + 1, QuesMessageBuffer);
+            printf("\033[1;34mChoose your answer (A-D):\033[0m\n");
 
-            printf(" \033[1;33m A. %s \033[0m \n", QuesMessageBuffer + OPTION_SIZE);
-            strncpy(bufOpt1,QuesMessageBuffer + OPTION_SIZE,OPTION_SIZE );
+            // Display and copy the options into the buffer
+            printf(" \033[1;33mA. %s\033[0m\n", QuesMessageBuffer + OPTION_SIZE);
+            strncpy(bufOpt1, QuesMessageBuffer + OPTION_SIZE, OPTION_SIZE);
 
-            // on affiche et copie dans le buffer l'option2
-            printf(" \033[1;33m B. %s \033[0m  \n", QuesMessageBuffer + 2 * OPTION_SIZE);
-            strncpy(bufOpt2,QuesMessageBuffer + 2*OPTION_SIZE,OPTION_SIZE );
+            printf(" \033[1;33mB. %s\033[0m\n", QuesMessageBuffer + 2 * OPTION_SIZE);
+            strncpy(bufOpt2, QuesMessageBuffer + 2 * OPTION_SIZE, OPTION_SIZE);
 
-            // on affiche et copie dans le buffer l'option3
-            printf(" \033[1;33m C. %s \033[0m \n", QuesMessageBuffer + 3 * OPTION_SIZE);
-            strncpy(bufOpt3,QuesMessageBuffer + 3*OPTION_SIZE,OPTION_SIZE );
+            printf(" \033[1;33mC. %s\033[0m\n", QuesMessageBuffer + 3 * OPTION_SIZE);
+            strncpy(bufOpt3, QuesMessageBuffer + 3 * OPTION_SIZE, OPTION_SIZE);
 
-             // on affiche et copie dans le buffer l'option4
-            printf(" \033[1;33m D. %s \033[0m \n", QuesMessageBuffer + 4 * OPTION_SIZE);
-            strncpy(bufOpt4,QuesMessageBuffer + 4*OPTION_SIZE,OPTION_SIZE );
+            printf(" \033[1;33mD. %s\033[0m\n", QuesMessageBuffer + 4 * OPTION_SIZE);
+            strncpy(bufOpt4, QuesMessageBuffer + 4 * OPTION_SIZE, OPTION_SIZE);
 
-            // Entrée de la réponse
+            // Input the answer
             scanf("%1s", MyChoice);
 
-            // Préparer la réponse
+            // Prepare the response
             memset(QuesMessageBuffer, 0, QUESTION_SIZE);
-            // je charge ma reponse dans le buffer
-            memset( QuesMessageBuffer, 0, QUESTION_SIZE);
-            strncpy(QuesMessageBuffer,  ChosenAnswer(MyChoice, bufOpt1, bufOpt2, bufOpt3, bufOpt4  ), OPTION_SIZE );
+            strncpy(QuesMessageBuffer, ChosenAnswer(MyChoice, bufOpt1, bufOpt2, bufOpt3, bufOpt4), OPTION_SIZE);
 
-            QuesMessageBuffer[QUESTION_SIZE - 1] = '9';  // Flag de fin de réponse
+            QuesMessageBuffer[QUESTION_SIZE - 1] = '9';  // End-of-answer flag
 
-            // Envoyer la réponse
+            // Send the answer
             SentQuestion = send(socket, QuesMessageBuffer, QUESTION_SIZE, 0);
             if (SentQuestion == SOCKET_ERROR) {
-                printf("\033[1;31mErreur lors de l'envoi de la réponse :\033[0m %d\n", WSAGetLastError());
+                printf("\033[1;31mError sending answer:\033[0m %d\n", WSAGetLastError());
                 return;
             }
         }
     }
+
+    recv(socket, MessageBuffer, MESSAGE_SIZE, 0);
+    //printf("Grade received from server: %s\n", MessageBuffer);
+
+    char Grade_Buffer[4];  // Size for 3 characters + '\0'
+    char Rank_Buffer[5];   // Size for 4 characters + '\0'
+    char Total_Player_Buffer[5];  // Size for 4 characters + '\0'
+    int u;
+
+    i = 0;
+    for (u = 0; MessageBuffer[u] != '*' && MessageBuffer[u] != '.' && i < 3; u++, i++) {
+        Grade_Buffer[i] = MessageBuffer[u];
+    }
+    Grade_Buffer[i] = '\0';  // Null-terminate the string
+    int Player_Note = atoi(Grade_Buffer);
+
+    i = 0;
+    for (u = 10; MessageBuffer[u] != '*' && MessageBuffer[u] != '.' && i < 4; u++, i++) {
+        Rank_Buffer[i] = MessageBuffer[u];
+    }
+    Rank_Buffer[i] = '\0';  // Null-terminate the string
+
+    i = 0;
+    for (u = 15; MessageBuffer[u] != '*' && MessageBuffer[u] != '.' && i < 4; u++, i++) {
+        Total_Player_Buffer[i] = MessageBuffer[u];
+    }
+    Total_Player_Buffer[i] = '\0';  // Null-terminate the string
+
+    PrintDecoratedTitle("YOU GOT:");
+printf("%d\n", Player_Note);
+
+PrintDecoratedTitle("You are now Rank:");
+printf("#%s with a TotalScore of: %s\n", Rank_Buffer, Total_Player_Buffer);
 }
+
 
 void Join_Game(SOCKET socket , char* MessageBuffer){
 
 }
-void Create_Game(SOCKET socket , char* MessageBuffer){
-
-}
-
+ 
 
 void User_Menu(SOCKET socket ,char* MessageBuffer ){
         int Menu_Option=0;
-printf(" user menu");
+        PrintDecoratedTitle("USER MENU");
+ 
 
     while(1){
         Menu_Option = 0;
     while ( Menu_Option<1 || Menu_Option>5 )
     {
-    printf(" \033[1;33m 1. PROFILE \033[0m \n");    
-    printf(" \033[1;33m 2. JOIN A GAME \033[0m\n");
-    printf(" \033[1;33m 3. CREATE A GAME \033[0m\n");
-    printf(" \033[1;33m 4.  ABOUT  \033[0m\n");
+     printf(" \033[1;33m 1.  START A NEW GAME  \033[0m\n");
     printf(" \033[1;33m 5.  EXIT  \033[0m\n");
     scanf("%d", &Menu_Option);
     }
@@ -335,20 +366,10 @@ printf(" user menu");
     switch (Menu_Option)
     {
     case  1:
-       printf(" profile \n");
+       Play_Game(socket, MessageBuffer, 0);
         break;
-    case 2:
-        printf(" JOIN A GAME \n");
-        break;
-    case 3:
-       printf(" CREATE A GAME \n");
-        break;
- case 4:
-    printf(" ABOUT \n"); 
-    break;
-    case 5:
-       printf(" EXIT \n");
-       return ;
+    case  2:
+      printf(" \033[1;31m 5.  EXIT  \033[0m\n");
         break;
     default:
         break;
@@ -358,62 +379,76 @@ printf(" user menu");
 
 
 int main() {
+    // Initialize the WinSock library
     WSADATA wsadata;
-    int Islog = 0;
+    int Islog = 0;  // Variable to check if the user is logged in or not
 
+    // Initialize WinSock
     if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0) {
-        printf("\033[1;31mErreur d'initialisation:\033[0m %d\n", WSAGetLastError());
-        exit(1);
+        printf("\033[1;31mInitialization error:\033[0m %d\n", WSAGetLastError());
+        exit(1);  // Exit if initialization fails
     }
 
+    // Create the socket
     SOCKET SocketFd = socket(AF_INET, SOCK_STREAM, 0);
     if (SocketFd == INVALID_SOCKET) {
-        printf("\033[1;31mErreur de création du socket:\033[0m %d\n", WSAGetLastError());
-        WSACleanup();
+        printf("\033[1;31mSocket creation error:\033[0m %d\n", WSAGetLastError());
+        WSACleanup();  // Clean up before exiting
         exit(1);
     }
 
+    // Initialize the server address
     struct sockaddr_in SocketAddress;
     SocketAddress.sin_family = AF_INET;
-    SocketAddress.sin_port = htons(5600);
+    SocketAddress.sin_port = htons(5600);  // Port used for the connection
 
+    // Convert the IP address to binary format
     int inetReturnCode = inet_pton(AF_INET, "127.0.0.1", &SocketAddress.sin_addr);
     if (inetReturnCode <= 0) {
-        printf("\033[1;31mErreur d'adresse IP.\033[0m\n");
-        closesocket(SocketFd);
-        WSACleanup();
+        printf("\033[1;31mIP address error.\033[0m\n");
+        closesocket(SocketFd);  // Close the socket in case of IP address error
+        WSACleanup();  // Clean up before exiting
         exit(1);
     }
 
-    PrintDecoratedTitle("CONNEXION AU SERVEUR");
+    // Display the title for the connection
+    PrintDecoratedTitle("CONNECTING TO THE SERVER");
 
+    // Attempt to connect to the server
     if (connect(SocketFd, (struct sockaddr*)&SocketAddress, sizeof(SocketAddress)) == SOCKET_ERROR) {
-        printf("\033[1;31mErreur de connexion:\033[0m %d\n", WSAGetLastError());
-        closesocket(SocketFd);
-        WSACleanup();
+        printf("\033[1;31mConnection error:\033[0m %d\n", WSAGetLastError());
+        closesocket(SocketFd);  // Close the socket in case of connection error
+        WSACleanup();  // Clean up before exiting
         exit(1);
     }
 
-    printf("\033[1;32mConnexion acceptée.\033[0m\n");
+    // Display a confirmation message for successful connection
+    printf("\033[1;32mConnection accepted.\033[0m\n");
 
+    // Declare a buffer for the message
     char MessageBuffer[MESSAGE_SIZE];
 
+    // Call the login function
     Login(&Islog, SocketFd, MessageBuffer);
 
+    // If the user is logged in
     if (Islog) {
-
-        PrintDecoratedTitle("BONNE CONTINUATION \n");
-         
-         User_Menu(SocketFd,MessageBuffer );
-
-        Play_Game(SocketFd, MessageBuffer);
+        PrintDecoratedTitle("GOOD LUCK \n");
+        // Call the User_Menu function to display the user menu
+         User_Menu(SocketFd, MessageBuffer);
+        // Call the Play_Game function to start the game
+       // Play_Game(SocketFd, MessageBuffer);
     }
 
-    // printf(" je vais tester le jeu \n");
-    // Play_Game(SocketFd, MessageBuffer);
+     
 
+    // Call the Play_Game function to start the game
+   // Play_Game(SocketFd, MessageBuffer, 0);
+
+    // Close the socket and clean up WinSock before exiting
     closesocket(SocketFd);
     WSACleanup();
 
     return 0;
 }
+

@@ -25,6 +25,7 @@
 #define ANSWER_QUESTION "5"
 #define CREATE_SESSION  "11"
 #define JOIN_SESSION    "12"
+#define GET_SESSION_LIST "13"
 
 // declaration globale du mutex et tableau global accessible par tous les threads
 HANDLE mutex;
@@ -32,109 +33,35 @@ char** GlobalQuesMatrix;
 
 
 // *************Party configurations
-
-    // game session
- typedef struct {
-    int player_count;
-    char game_name[20];
-    int is_joinable;
-    char players_in_game[MAX_CLIENTS][20];
-    char **question_matrix;
-} GameSession;
-
-// Structure pour gérer le lobby de jeu et les sessions
-typedef struct {
-    int game_sessions_count;
-    char game_sessions_list[MAX_CLIENTS][20];
-    int joinable_game_sessions[MAX_CLIENTS][2];
-    GameSession game_lobby_game_session[MAX_CLIENTS]; // Table des sessions de jeu
-} GameLobby;
-
-GameLobby game_lobby = { .game_sessions_count = 0 };
-
  
-
-// Fonction pour créer une nouvelle session de jeu dans le lobby
-int create_game_session(GameLobby *game_lobby,   char* MessageBuffer, SOCKET socket) 
-{        int i ;
-
-        char game_name[20];
-        // we extract the game name
-        for(i=0;  MessageBuffer[i]!='*';i++ )
-        {
-                game_name[i]=MessageBuffer[i];
-        }
-
-    if (game_lobby->game_sessions_count >= MAX_CLIENTS) {
-        printf("(ERROR) : Le lobby de jeu est plein, impossible de créer une nouvelle session.\n");
-         memset(MessageBuffer, '*', MESSAGE_SIZE);
-            MessageBuffer[MESSAGE_SIZE-1]='1';
-            send(socket, MessageBuffer, MESSAGE_SIZE, 0);
-        return -1;
-    }
-
-    for (i= 0; i < MAX_CLIENTS; i++) {
-        if (game_lobby->game_sessions_list[i][0] == '\0') {
-            strcpy(game_lobby->game_sessions_list[i], game_name);
-            game_lobby->game_sessions_count++;
-
-            // Initialiser la session de jeu correspondante
-            GameSession *new_game_session = &game_lobby->game_lobby_game_session[game_lobby->game_sessions_count - 1];
-            strcpy(new_game_session->game_name, game_name);
-            new_game_session->player_count = 0;
-            new_game_session->is_joinable = 1;  // Par défaut, la session est joignable
-            printf("Nouvelle session de jeu créée : %s\n", game_name);
-
-            // send response to client
-            memset(MessageBuffer, '*', MESSAGE_SIZE);
-            MessageBuffer[MESSAGE_SIZE-1]='0';
-            send(socket, MessageBuffer, MESSAGE_SIZE, 0);
-
-            return 0;
-        }
-    }
-
-    printf("(ERROR) : Tableau des sessions de jeu plein.\n");
-     memset(MessageBuffer, '*', MESSAGE_SIZE);
-            MessageBuffer[MESSAGE_SIZE-1]='0';
-            send(socket, MessageBuffer, MESSAGE_SIZE, 0);
-    return -1;
-}
-
-
-int join_game_session(GameLobby *game_lobby, const char game_name[20], char player_name[20]) {
-    for (int i = 0; i < game_lobby->game_sessions_count; i++) {
-        // Trouver la session de jeu par nom
-        if (strcmp(game_lobby->game_sessions_list[i], game_name) == 0) {
-            GameSession *game_session = &game_lobby->game_lobby_game_session[i];
-
-            if (game_session->player_count < MAX_CLIENTS && game_session->is_joinable == 1) {
-                for (int j = 0; j < MAX_CLIENTS; j++) {
-                    if (game_session->players_in_game[j][0] == '\0') {
-                        strcpy(game_session->players_in_game[j], player_name);
-                        game_session->player_count++;
-                        printf("%s a rejoint la session de jeu %s\n", player_name, game_name);
-                        return 0;
-                    }
-                }
-            } else {
-                printf("Impossible de rejoindre la session de jeu %s. Session pleine ou non-joinable.\n", game_name);
-                return -1;
-            }
-        }
-    }
-
-    printf("La session de jeu %s n'existe pas.\n", game_name);
-    return -1;
-}
-
-
-// END *************Party configurations
-
 
 // variable pour verifier si la matrix de question a deja ete chargée
 int MatrixLoaded=0;
 int *PtrMatrixLoaded = &MatrixLoaded;
+int Global_Question_Number=0;
+int *PtrGlobal_Question_Number = &Global_Question_Number;
+
+
+void Handle_Check_MatrixLoaded(SOCKET socket , char * MessageBuffer){
+   printf(" in Handel_Check_MatrixLoaded  test  \n");
+    if( *PtrMatrixLoaded == 1)
+    {
+        MessageBuffer[1]='1';
+         printf(" in Handel_Check_MatrixLoaded  1  \n");
+         printf(" MESSAGE BUFFER DE MATRIX LOADED %s \n", MessageBuffer);
+        send(socket, MessageBuffer, MESSAGE_SIZE, 0);
+    }else if( *PtrMatrixLoaded == 0 ) {
+        MessageBuffer[1]='0'; 
+         printf(" in Handel_Check_MatrixLoaded  0 \n");
+          printf(" MESSAGE BUFFER DE MATRIX LOADED %s \n", MessageBuffer);
+        send(socket, MessageBuffer, MESSAGE_SIZE, 0);
+    }else{
+        MessageBuffer[1]='7'; 
+         printf(" MESSAGE BUFFER DE MATRIX LOADED %s \n", MessageBuffer);
+         printf(" in Handel_Check_MatrixLoaded  0 \n");
+        send(socket, MessageBuffer, MESSAGE_SIZE, 0);
+    }
+}
 
 // init winsocl
 void InitializeWinsock() {
@@ -150,8 +77,40 @@ void CleanupWinsock() {
     WSACleanup();
 }
 
-
-void Handle_Login(int *ResponseFlag, char *MessageBuffer) {
+int Get_Last_Id()
+{
+    FILE *IdFile = fopen("Id.txt", "r");
+    int Id;
+    
+    if (IdFile != NULL) {
+        // Lire un entier à partir du fichier
+        if (fscanf(IdFile, "%d", &Id) == 1) {
+            fclose(IdFile);
+            return Id;
+        } else {
+            printf("-------ERREUR : Format incorrect dans le fichier Id.txt-------\n");
+        }
+        fclose(IdFile);
+    } else {
+        printf("-------UNE ERREUR EST SURVENUE LORS DE L'ACCES A L'ID -------\n");
+    }
+    
+    return -1;
+}
+int Update_Last_Id(int newId)
+{
+    FILE *IdFile = fopen("Id.txt", "w");  // Ouvrir le fichier en mode écriture
+    if (IdFile != NULL) {
+        // Écrire le nouvel ID dans le fichier
+        fprintf(IdFile, "%d", newId);
+        fclose(IdFile);
+        return 1;  // Succès
+    } else {
+        printf("-------ERREUR : Impossible d'ouvrir le fichier pour mise à jour de l'ID-------\n");
+        return 0;  // Échec
+    }
+}
+void Handle_Login(int *ResponseFlag, char *MessageBuffer, int * ptr_User_Id , int * Ptr_User_Score) {
     FILE *myfile = fopen("Users.txt", "r");
     if (myfile == NULL) {
         printf("Erreur d'ouverture du fichier.\n");
@@ -161,7 +120,7 @@ void Handle_Login(int *ResponseFlag, char *MessageBuffer) {
 
     char enteredName[PART_SIZE] = {0};
     char enteredPassword[PART_SIZE] = {0};
-
+printf(" message buffer dans handle login : %s", MessageBuffer);
     // Extraction du nom d'utilisateur depuis MessageBuffer
     int i = 0;
     while (MessageBuffer[i] != '*' && i < PART_SIZE) {
@@ -172,46 +131,52 @@ void Handle_Login(int *ResponseFlag, char *MessageBuffer) {
 
     // Extraction du mot de passe depuis MessageBuffer
     i = 0;
-    while (MessageBuffer[PART_SIZE + i] != '*' && i < PART_SIZE) {
-        enteredPassword[i] = MessageBuffer[PART_SIZE + i];
+    while (MessageBuffer[PART_SIZE +i-1] != '*' && i < PART_SIZE) {
+        enteredPassword[i] = MessageBuffer[PART_SIZE + i-1];
         i++;
     }
    // enteredPassword[i] = '\0';  // Fin de chaîne
 
     printf("Nom d'utilisateur entré : %s\n", enteredName);
-   // printf("Mot de passe entré : %s\n", enteredPassword);
+    printf("Mot de passe entré : %s\n", enteredPassword);
 
-    char fileLine[MESSAGE_SIZE];
+    char fileLine[256];
     int found = 0;
 
     // Lecture du fichier ligne par ligne
     
-    while (fgets(fileLine, sizeof(fileLine), myfile)) {
-      //  fileLine[strcspn(fileLine, "\n")] = 0;  // Enlever le '\n' à la fin
+   while (fgets(fileLine, sizeof(fileLine), myfile)) {
+    //fileLine[strcspn(fileLine, "\n")] = 0;  // Supprimer le '\n' à la fin
 
-        char fileName[PART_SIZE] = {0};
-        char filePassword[PART_SIZE] = {0};
+    char fileName[PART_SIZE] = {0};
+    char filePassword[PART_SIZE] = {0};
 
-        // Extraction des informations depuis la ligne du fichier
-        printf(" dedans\n");
-        if (sscanf(fileLine, "Nom:%s Pwd:%s\n", fileName, filePassword) == 2) {
-            // Comparaison avec les données entrées
-
-            printf( " nom d'utilisateur dans le file : %s  \n", fileName);
-            if (strcmp(enteredName, fileName) == 0 && strcmp(enteredPassword, filePassword) == 0) {
-                printf("Connexion réussie pour %s.\n", enteredName);
-                *ResponseFlag = 3;  // Connexion réussie
-                fclose(myfile);  // Fermeture du fichier immédiatement après succès
-                return;  // Quitter immédiatement dès qu'un utilisateur est trouvé
-            }
+    // Extraction des informations depuis la ligne du fichier
+    printf("dedans\n");
+    int Id;
+    int Score;
+    if (sscanf(fileLine, "Id:%d Nom:%s Pwd:%s TotalScore:%d", &Id, fileName, filePassword,&Score) == 4) {
+        // Comparaison avec les données entrées
+        printf("Nom d'utilisateur dans le fichier : %s\n", fileName);
+        printf("mot de passe  d'utilisateur dans le fichier : %s\n", filePassword);
+        if (strcmp(enteredName, fileName) == 0 && strcmp(enteredPassword, filePassword) == 0) {
+            printf("Connexion réussie pour %s.\n", enteredName);
+            *ptr_User_Id = Id;
+            *Ptr_User_Score=Score;
+            printf(" Login Succes User Id:%d , Score:  %d  \n", *ptr_User_Id, *Ptr_User_Score);
+            *ResponseFlag = 3;  // Connexion réussie
+            fclose(myfile);  // Fermeture du fichier immédiatement après succès
+            return;  // Quitter immédiatement dès qu'un utilisateur est trouvé
         }
     }
+}
 
-    fclose(myfile);
+fclose(myfile);
 
-    // Si aucun utilisateur valide trouvé, envoyer un message d'erreur
-    printf("Nom d'utilisateur ou mot de passe incorrect.\n");
-    *ResponseFlag = -1;  // Échec de la connexion
+// Si aucun utilisateur valide trouvé, envoyer un message d'erreur
+printf("Nom d'utilisateur ou mot de passe incorrect.\n");
+*ResponseFlag = -1;  // Échec de la connexion
+
 }
  
 void Handle_SignUp(int *ResponseFlag, char *MessageBuffer) {
@@ -244,7 +209,13 @@ void Handle_SignUp(int *ResponseFlag, char *MessageBuffer) {
     // Sauvegarde dans le fichier
 
     //printf(" pwd avant de sauvegarder , %s \n", password);
-    fprintf(myfile, "Nom:%s Pwd:%s\n", username, password);
+    int Id = Get_Last_Id();
+    int TotalScore=0;
+    fprintf(myfile, "Id:%d Nom:%s Pwd:%s TotalScore:%d\n",Id, username, password, TotalScore);
+
+    Id++;
+
+    Update_Last_Id(Id);
 
     fclose(myfile);
 
@@ -255,21 +226,136 @@ void Handle_GameLunch( ){
      printf(" I am doing GameLunch \n");      
 }
 
-void Handle_Create_Party()
-{
-WaitForSingleObject(mutex, INFINITE);
+double CalculatePlayerScore(int UserScore, int QuestionNumber) {
+    // Vérification pour éviter une division par zéro
+    if (QuestionNumber <= 0) {
+        printf("Erreur : le nombre de questions doit être supérieur à 0.\n");
+        return -1.0; // Retourne une valeur d'erreur spéciale
+    }
 
+    // Calcul de la note sur 100
+    double ScorePercentage = ((double)UserScore / QuestionNumber) * 100;
 
+    // Retourner la note sur 100
+    return ScorePercentage;
 }
 
- void HandlePlayGame(char * MessageBuffer, SOCKET socketFd) {
+ void UpdateUserScore(int userId, int scoreToAdd, int* Ptr_Rank, int* Ptr_Total_Player ) {
+    FILE *file = fopen("Users.txt", "r+");
+    if (!file) {
+        printf("Erreur lors de l'ouverture du fichier Users.txt.\n");
+        return;
+    }
 
+    char buffer[256];
+    char lines[100][256]; // Tableau pour stocker jusqu'à 100 lignes
+    int scores[100];      // Tableau des scores pour le tri
+    int ids[100];         // Tableau des IDs
+    char names[100][50];  // Tableau des noms
+    char passwords[100][50]; // Tableau des mots de passe
+    int userCount = 0;
+    int found = 0;
 
+    // Lecture et extraction des données
+    while (fgets(buffer, sizeof(buffer), file)) {
+        int id, totalScore;
+        char name[50], password[50];
 
+        if (sscanf(buffer, "Id:%d Nom:%49s Pwd:%49s TotalScore:%d", &id, name, password, &totalScore) == 4) {
+            // Stocker les informations
+            ids[userCount] = id;
+            scores[userCount] = totalScore;
+            strcpy(names[userCount], name);
+            strcpy(passwords[userCount], password);
+            strcpy(lines[userCount], buffer);
 
+            // Mise à jour du score si l'utilisateur est trouvé
+            if (id == userId) {
+                scores[userCount] += scoreToAdd;
+                snprintf(lines[userCount], sizeof(lines[userCount]),
+                         "Id:%d Nom:%s Pwd:%s TotalScore:%d\n", id, name, password, scores[userCount]);
+                found = 1;
+            }
+            userCount++;
+        }
+    }
 
-    
-    // extraction du numéro de questions dans le message buffer
+    if (!found) {
+        printf("Utilisateur avec Id:%d non trouvé dans Users.txt.\n", userId);
+        fclose(file);
+        return;
+    }
+
+    // Tri des utilisateurs par scores décroissants
+    for (int i = 0; i < userCount - 1; i++) {
+        for (int j = i + 1; j < userCount; j++) {
+            if (scores[i] < scores[j]) {
+                // Échange des scores
+                int tempScore = scores[i];
+                scores[i] = scores[j];
+                scores[j] = tempScore;
+
+                // Échange des IDs
+                int tempId = ids[i];
+                ids[i] = ids[j];
+                ids[j] = tempId;
+
+                // Échange des noms
+                char tempName[50];
+                strcpy(tempName, names[i]);
+                strcpy(names[i], names[j]);
+                strcpy(names[j], tempName);
+
+                // Échange des mots de passe
+                char tempPassword[50];
+                strcpy(tempPassword, passwords[i]);
+                strcpy(passwords[i], passwords[j]);
+                strcpy(passwords[j], tempPassword);
+
+                // Échange des lignes
+                char tempLine[256];
+                strcpy(tempLine, lines[i]);
+                strcpy(lines[i], lines[j]);
+                strcpy(lines[j], tempLine);
+            }
+        }
+    }
+
+    // Trouver le rang du joueur
+    int rank = 1;
+    for (int i = 0; i < userCount; i++) {
+        if (ids[i] == userId) {
+            printf("You are ranked #%d with a total score of %d.\n", rank, scores[i]);
+            
+            *Ptr_Rank=rank;
+            *Ptr_Total_Player = scores[i];
+            break;
+        }
+        rank++;
+    }
+
+    // Réécriture du fichier
+    freopen("Users.txt", "w", file);
+    for (int i = 0; i < userCount; i++) {
+        fputs(lines[i], file);
+    }
+
+    fclose(file);
+}
+
+void IntToString(int number, char *output) {
+    // Utilisation de sprintf pour convertir un entier en chaîne de caractères
+    sprintf(output, "%d", number);
+}
+
+ void HandlePlayGame(char * MessageBuffer, SOCKET socketFd,  int * Ptr_User_Id, int * Ptr_User_Score) {
+int UserScore=0;
+ int QuestionNumber;
+char ** Local_Question_Matrix;
+ int IamLoader = 0;
+ 
+
+  // extraction du numéro de questions dans le message buffer
     char StrQuestionNumber[5];
     int i;
     for(i = 0; MessageBuffer[i] != '*'; i++) {
@@ -277,27 +363,36 @@ WaitForSingleObject(mutex, INFINITE);
     }
 
     printf("SUR LE POINT DE JOUER A UN JEU\n");  
-    int QuestionNumber = atoi(StrQuestionNumber);
-    printf("le nombre de questions reçu est : %d\n", QuestionNumber);
-    int IamLoader = 0;
+     QuestionNumber = atoi(StrQuestionNumber);
+    printf("le nombre de questions reçu est : %d\n",  QuestionNumber );
+   
 
     // fonction pour permettre à seulement un seul player de créer un jeu grâce à la variable IamLoaded
-    if (*PtrMatrixLoaded == 0) {
+    
+        *PtrMatrixLoaded =1;
         IamLoader = 1;
-        WaitForSingleObject(mutex, INFINITE);
-        GlobalQuesMatrix = Prepared_Ques_Arr(QuestionNumber);
-        Prepare_Quiz(GlobalQuesMatrix, &QuestionNumber);
-        ReleaseMutex(mutex);
-    }
+      //  WaitForSingleObject(mutex, INFINITE);
+        Local_Question_Matrix = Prepared_Ques_Arr( QuestionNumber);
+        
+        Prepare_Quiz(Local_Question_Matrix, &QuestionNumber);
+      
+       // ReleaseMutex(mutex);
+    
 
     // message de confirmation que le jeu a été bien chargé
-    MessageBuffer[0] = '1';
+   // memset(MessageBuffer, '1', MESSAGE_SIZE);
+     MessageBuffer[0] = '1';
     int ConfirmGameCreationFd = send(socketFd, MessageBuffer, MESSAGE_SIZE, 0);
+    printf("MessageBuffer : %s \n", MessageBuffer);
     if (ConfirmGameCreationFd == SOCKET_ERROR) {
         printf("ERREUR LORS DE LA CONFIRMATION DE CREATION DU JEU : %d\n", WSAGetLastError());
         return;
     }
 
+
+
+    printf("le nombre de questions reçu est  toujours: %d\n", QuestionNumber);
+  
     // Envoi des questions et réception des réponses
     char Question[OPTION_SIZE] = {0};
     char Option1[OPTION_SIZE] = {0};
@@ -308,9 +403,9 @@ WaitForSingleObject(mutex, INFINITE);
     char UserOpt[OPTION_SIZE]={0};
     char QuestionMessageBuffer[QUESTION_SIZE] = {0};
 
-    for(i = 0; i < QuestionNumber; i++) {
+    for(int i = 0; i < QuestionNumber; i++) {
         int SendQuestionFlag, RecvQuestionFd;
-        sscanf(GlobalQuesMatrix[i], "ID:%*d QUESTION:%99[^#] # OPTION1:%99[^#] # OPTION2:%99[^#] # OPTION3:%99[^#] # OPTION4:%99[^#] # CORRECTOPTION:%99[^#] #", 
+        sscanf(Local_Question_Matrix[i], "ID:%*d QUESTION:%99[^#] # OPTION1:%99[^#] # OPTION2:%99[^#] # OPTION3:%99[^#] # OPTION4:%99[^#] # CORRECTOPTION:%99[^#] #", 
                Question, Option1, Option2, Option3, Option4, GoodOpt);
 
         // Charger les différentes sections dans notre buffer
@@ -345,6 +440,8 @@ WaitForSingleObject(mutex, INFINITE);
        if(CmpResult == 0)
        {
         printf(" BONNE REPONSE \n");
+        UserScore++;
+        
        }else
        {
         printf(" MAUVAISE REPONSE \n");
@@ -352,6 +449,29 @@ WaitForSingleObject(mutex, INFINITE);
 
         memset(QuestionMessageBuffer, 0, QUESTION_SIZE);  // Réinitialisation du buffer
     }
+    
+    double Player_Note = CalculatePlayerScore( UserScore, QuestionNumber );
+    printf(" player got %lf \n",Player_Note );
+    char buffer[4];
+    int rank=0;
+    int * Ptr_Rank=&rank;
+    int TotalPlayers=0;
+    int * Ptr_Total_Player = &TotalPlayers;
+    UpdateUserScore(*Ptr_User_Id, UserScore ,Ptr_Rank, Ptr_Total_Player );
+    printf(" Ptr val : rank  %d  Score %d \n", rank, TotalPlayers);
+    snprintf(buffer, sizeof(buffer), "%.1f", Player_Note); 
+    strncpy(MessageBuffer, buffer, strlen(buffer));
+
+    char RankStr[5];
+    char TotalScore[5];
+     IntToString(rank, RankStr);
+     IntToString( TotalPlayers, TotalScore);
+     strncpy(MessageBuffer+10,RankStr, strlen(RankStr));
+     strncpy( MessageBuffer+15, TotalScore, strlen(TotalScore));
+
+    printf(" send grade message %s \n", MessageBuffer);
+    send(socketFd, MessageBuffer, MESSAGE_SIZE, 0);
+
 
     printf("Le jeu est en train d'être joué\n");
 
@@ -363,9 +483,9 @@ WaitForSingleObject(mutex, INFINITE);
            /* if (strlen(GlobalQuesMatrix[i]) > 0) {
                 printf(" %s\n", GlobalQuesMatrix[i]);
             }*/
-            free(GlobalQuesMatrix[i]);
+            free(Local_Question_Matrix[i]);
         }
-        free(GlobalQuesMatrix);
+        free(Local_Question_Matrix);
     }
     printf("Mémoire libérée proprement\n");
 }
@@ -373,26 +493,29 @@ WaitForSingleObject(mutex, INFINITE);
 
 
 int get_Flag(char *buffer) {
- 
- char charFlag; 
+    char strFlag[3] = {0};  // Tableau pour stocker les deux derniers caractères + '\0'
     int response;
-    
-    charFlag = *(buffer + MESSAGE_SIZE - 1);   
-    
-    // Convertir charFlag en une chaîne pour utiliser atoi()
-    char strFlag[2];   
-    strFlag[0] = charFlag;  
-    strFlag[1] = '\0';   
-    
-    
+
+    // Vérifier si l'avant-dernier caractère est '*'
+    if (buffer[MESSAGE_SIZE - 2] == '*') {
+        // Si oui, on ne prend que le dernier caractère
+        strFlag[0] = buffer[MESSAGE_SIZE - 1];
+    } else {
+        // Sinon, on prend les deux derniers caractères
+        strFlag[0] = buffer[MESSAGE_SIZE - 2];
+        strFlag[1] = buffer[MESSAGE_SIZE - 1];
+    }
+
+    // Convertir la chaîne en entier
     response = atoi(strFlag);
-    
-    printf("\nLa valeur retournée par _ est : %d\n", response);
-    
+
+    printf("\nLa valeur retournée par get_Flag est : %d\n", response);
+
     return response;
 }
 
-void Action_Switch(int flag, int* Responseflag, char * MessageBuffer , SOCKET socket ){
+
+void Action_Switch(int flag, int* Responseflag, char * MessageBuffer , SOCKET socket, int * Ptr_User_Id , int * Ptr_User_Score, char ** LocalQuestionMatrix ){
     printf(" bien dans do some action \n");
     switch (flag)
     {
@@ -403,16 +526,17 @@ void Action_Switch(int flag, int* Responseflag, char * MessageBuffer , SOCKET so
        printf(" option 2");
         break;
     case 3 :       
-         Handle_Login(Responseflag, MessageBuffer);
+         Handle_Login(Responseflag, MessageBuffer, Ptr_User_Id, Ptr_User_Score);
+         printf(" User Id : %d", *Ptr_User_Id );
         break;
     case 4:
         Handle_SignUp(Responseflag, MessageBuffer);
         break;    
      case 8:
-        HandlePlayGame(MessageBuffer, socket);
+        HandlePlayGame(MessageBuffer, socket, Ptr_User_Id, Ptr_User_Score);
         break; 
     case 11:
-         
+         Handle_Check_MatrixLoaded(socket , MessageBuffer);
         break; 
     default:
     printf(" do some action");
@@ -424,6 +548,12 @@ void Action_Switch(int flag, int* Responseflag, char * MessageBuffer , SOCKET so
 //  client handler
 DWORD WINAPI ClientHandler(LPVOID clientSocket) {
     int ResponseFlag;
+    int UserId=-1;
+    int * PtrUserId=&UserId;
+    int UserScore=-1;
+    int * Ptr_User_Score= &UserScore;
+    char ** LocalQuestionMatrix;
+
     SOCKET clientSock = *((SOCKET*)clientSocket);
     char buffer[MESSAGE_SIZE] = {0};
 
@@ -447,7 +577,7 @@ DWORD WINAPI ClientHandler(LPVOID clientSocket) {
             // on cherche le flag de la requette
            int flag = get_Flag(buffer);
 
-           Action_Switch(flag, &ResponseFlag, buffer, clientSock);
+           Action_Switch(flag, &ResponseFlag, buffer, clientSock,PtrUserId, Ptr_User_Score, LocalQuestionMatrix);
  
             //  apres avoir fait une action conformement on flage je renvoi un message au client pour lui notifier de la reponse 
 
@@ -493,21 +623,7 @@ typedef enum{
 } MessageProtocol;
 
 
-int Get_Last_Id()
-{
-FILE * IdFile = fopen("Id.txt", "r");
-char IdChar ;
-int Id;
-if(IdFile!=NULL){
-     IdChar = fgetc(IdFile);
-      Id =  IdChar - '0';
-fclose(IdFile);
-return Id;
-}
-printf("-------UNE ERREUR EST SURVENUE LORS DE L'ACCES A L'ID -------");
-
-return -1;
-}
+ 
  
 
 int main() {

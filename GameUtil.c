@@ -107,7 +107,7 @@ char **Prepared_Ques_Arr(int QuestionNumber) {
 int *Random_Without_Reps(int min, int max, int sizeOfArray, int *AllreadyGenerated) {
     int OurRandNumber;
     int isDuplicate;
-
+srand(time(NULL)); 
     memset(AllreadyGenerated, -1, sizeOfArray * sizeof(int)); // Initialisation
 
     for (int i = 0; i < sizeOfArray; i++) {

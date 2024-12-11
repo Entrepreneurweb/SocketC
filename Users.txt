@@ -1,11 +1,3 @@
-Nom:exo Pwd:est
-Nom:exo1 Pwd:est1
-Nom:exau Pwd:est1
-Nom:dienaba Pwd:23
-Nom:exauce Pwd:est
-Nom:exoice Pwd:23
-Nom:joph Pwd:23
-Nom:ali Pwd:est
-Nom:test Pwd:5
-Nom:dona Pwd:ona
-Nom:pasto Pwd:asto
+Id:4 Nom:exauce Pwd:test TotalScore:20
+Id:3 Nom:exo Pwd:test TotalScore:4
+Id:5 Nom:exauce Pwd:123 TotalScore:3
